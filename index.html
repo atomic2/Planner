@@ -72,7 +72,7 @@
         .btn-action:hover { transform: translateY(-2px); filter: brightness(1.1); }
         .btn-secondary { background-color: #6c757d; }
 
-        /* --- EXPANDED 5-DAY GRID --- */
+        /* --- EXPANDED 5-DAY GRID (NO WEEKENDS) --- */
         .simple-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows: 1fr; gap: 1px; background: #e5e5e5; flex: 1; border: 1px solid var(--border-light); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 10px; }
         
         .cal-tile { background: #fff; cursor: pointer; display: flex; flex-direction: column; overflow: hidden; transition: background 0.1s; }
@@ -80,8 +80,8 @@
         .cal-tile.muted { background-color: #fafafa; cursor: default; }
         .cal-tile.muted:hover { background-color: #fafafa; }
         
-        .tile-header-area { background-color: var(--tile-header-bg); color: var(--tile-header-text); padding: 6px 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s, color 0.3s;}
-        .tile-date { font-weight: 700; font-size: 0.9rem; text-transform: uppercase; }
+        .tile-header-area { background-color: var(--tile-header-bg); color: var(--tile-header-text); padding: 8px 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s, color 0.3s;}
+        .tile-date { font-weight: 700; font-size: 0.95rem; text-transform: uppercase; }
         
         .tile-content-area { padding: 10px 12px; flex: 1; overflow-y: auto; }
         .tile-previews { font-size: 0.85rem; color: #444; line-height: 1.5; }
@@ -341,7 +341,7 @@
             for (let d = 1; d <= 31; d++) {
                 let dow = new Date(2026, 7, d).getDay(); 
                 
-                // Keep only weekdays (Monday = 1 through Friday = 5)
+                // Only build Monday (1) through Friday (5)
                 if (dow > 0 && dow < 6) { 
                     if (isFirstRow) {
                         for (let i = 1; i < dow; i++) {
