@@ -35,7 +35,6 @@
 
         .tabs { position: absolute; right: -42px; top: 2%; bottom: 2%; display: flex; flex-direction: column; gap: 2px; list-style: none; z-index: 5; width: 42px; }
         
-        /* Updated Tab Styling to handle dynamic colors natively */
         .tab { flex: 1; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; border: 1px solid var(--border-light); border-left: none; border-radius: 0 8px 8px 0; box-shadow: 3px 2px 5px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; background-color: #b89742; }
         .tab span { writing-mode: vertical-rl; text-orientation: mixed; }
         .tab.active { width: 52px; font-weight: bold; border-color: rgba(0,0,0,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
@@ -153,6 +152,8 @@
                 <span class="tag-label">Tag:</span>
                 <select id="entryTag">
                     <option value="General">General</option>
+                    <option value="School">School</option>
+                    <option value="Holiday">Holiday</option>
                     <option value="Ideas">Ideas</option>
                     <option value="Maintenance">Maintenance</option>
                 </select>
@@ -161,7 +162,6 @@
             </div>
         </div>
 
-        <!-- Academic Calendar Order -->
         <ul class="tabs">
             <li class="tab active" id="tab-aug" onclick="loadMonth('aug')"><span>AUG</span></li>
             <li class="tab" id="tab-sep" onclick="loadMonth('sep')"><span>SEP</span></li>
@@ -236,7 +236,6 @@
     <script>
         const baseYear = 2026;
         
-        // Year offset manages the transition from Fall 2026 to Spring 2027
         const monthsConfig = {
             'aug': { idx: 7, name: 'August', days: 31, yearOffset: 0 },
             'sep': { idx: 8, name: 'September', days: 30, yearOffset: 0 },
@@ -249,6 +248,40 @@
             'apr': { idx: 3, name: 'April', days: 30, yearOffset: 1 },
             'may': { idx: 4, name: 'May', days: 31, yearOffset: 1 },
             'jun': { idx: 5, name: 'June', days: 30, yearOffset: 1 }
+        };
+
+        // Injector for predefined 2026-2027 Academic Schedule
+        const predefinedEvents = {
+            'sep-d2': [{ title: 'School Year Begins / PA Day', tag: 'School' }],
+            'sep-d3': [{ title: 'PA Day (Provincial Priorities)', tag: 'School' }],
+            'sep-d7': [{ title: 'Labour Day', tag: 'Holiday' }],
+            'sep-d8': [{ title: 'First Day of Classes', tag: 'School' }],
+            'oct-d12': [{ title: 'Thanksgiving Day', tag: 'Holiday' }],
+            'oct-d26': [{ title: 'PA Day (Provincial Priorities)', tag: 'School' }],
+            'nov-d27': [{ title: 'PA Day (Reporting)', tag: 'School' }],
+            'dec-d21': [{ title: 'Winter Break', tag: 'Holiday' }],
+            'dec-d22': [{ title: 'Winter Break', tag: 'Holiday' }],
+            'dec-d23': [{ title: 'Winter Break', tag: 'Holiday' }],
+            'dec-d24': [{ title: 'Winter Break', tag: 'Holiday' }],
+            'dec-d25': [{ title: 'Winter Break (Christmas)', tag: 'Holiday' }],
+            'dec-d28': [{ title: 'Winter Break', tag: 'Holiday' }],
+            'dec-d29': [{ title: 'Winter Break', tag: 'Holiday' }],
+            'dec-d30': [{ title: 'Winter Break', tag: 'Holiday' }],
+            'dec-d31': [{ title: 'Winter Break', tag: 'Holiday' }],
+            'jan-d1': [{ title: 'Winter Break (New Year)', tag: 'Holiday' }],
+            'jan-d18': [{ title: 'PA Day (Report Cards)', tag: 'School' }],
+            'feb-d12': [{ title: 'PA Day (Provincial Priorities)', tag: 'School' }],
+            'feb-d15': [{ title: 'Family Day', tag: 'Holiday' }],
+            'mar-d15': [{ title: 'Spring Break', tag: 'Holiday' }],
+            'mar-d16': [{ title: 'Spring Break', tag: 'Holiday' }],
+            'mar-d17': [{ title: 'Spring Break', tag: 'Holiday' }],
+            'mar-d18': [{ title: 'Spring Break', tag: 'Holiday' }],
+            'mar-d19': [{ title: 'Spring Break', tag: 'Holiday' }],
+            'mar-d26': [{ title: 'Good Friday', tag: 'Holiday' }],
+            'mar-d29': [{ title: 'Easter Monday', tag: 'Holiday' }],
+            'may-d24': [{ title: 'Victoria Day', tag: 'Holiday' }],
+            'jun-d14': [{ title: 'PA Day (Report Cards)', tag: 'School' }],
+            'jun-d30': [{ title: 'School Year Ends', tag: 'School' }]
         };
 
         let currentMonthId = "aug"; 
@@ -293,7 +326,6 @@
         });
 
         window.onload = () => {
-            // Data Migration Engine
             const saved = localStorage.getItem('plannerStructuredData');
             if (saved) {
                 plannerData = JSON.parse(saved);
@@ -305,7 +337,21 @@
                 }
             }
             
-            // Theme Migration Engine
+            // First run integration of predefined school dates
+            if (!localStorage.getItem('academicEventsLoaded_v1')) {
+                for (const [dayKey, events] of Object.entries(predefinedEvents)) {
+                    if (!plannerData[dayKey]) plannerData[dayKey] = { tasks: [], notes: [] };
+                    events.forEach(e => {
+                        const exists = plannerData[dayKey].notes.find(n => n.title === e.title);
+                        if (!exists) {
+                            plannerData[dayKey].notes.unshift({ title: e.title, details: '', tag: e.tag });
+                        }
+                    });
+                }
+                localStorage.setItem('plannerStructuredData', JSON.stringify(plannerData));
+                localStorage.setItem('academicEventsLoaded_v1', 'true');
+            }
+
             const savedThemes = localStorage.getItem('plannerMonthThemes');
             if (savedThemes) {
                 monthThemes = JSON.parse(savedThemes);
@@ -433,7 +479,6 @@
             for (let d = 1; d <= conf.days; d++) {
                 let dow = new Date(displayYear, conf.idx, d).getDay(); 
                 
-                // Only build Monday (1) through Friday (5)
                 if (dow > 0 && dow < 6) { 
                     if (isFirstRow) {
                         for (let i = 1; i < dow; i++) {
