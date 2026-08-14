@@ -13,9 +13,9 @@
             --green-accent: #4a5d3f; 
             --border-light: #d1d1d1; 
             
-            --tile-header-bg: #f4f4f4;
-            --tile-header-text: #555;
-            --active-tab-bg: #b89742;
+            --tile-header-bg: #f5f2eb;
+            --tile-header-text: #4a4a4a;
+            --active-tab-bg: #d4c4a8;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -35,7 +35,7 @@
 
         .tabs { position: absolute; right: -42px; top: 2%; bottom: 2%; display: flex; flex-direction: column; gap: 2px; list-style: none; z-index: 5; width: 42px; }
         
-        .tab { flex: 1; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; border: 1px solid var(--border-light); border-left: none; border-radius: 0 8px 8px 0; box-shadow: 3px 2px 5px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; background-color: #b89742; }
+        .tab { flex: 1; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; border: 1px solid var(--border-light); border-left: none; border-radius: 0 8px 8px 0; box-shadow: 3px 2px 5px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; background-color: #d4c4a8; }
         .tab span { writing-mode: vertical-rl; text-orientation: mixed; }
         .tab.active { width: 52px; font-weight: bold; border-color: rgba(0,0,0,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .tab.special { background-color: #34495e !important; color: white; }
@@ -250,7 +250,6 @@
             'jun': { idx: 5, name: 'June', days: 30, yearOffset: 1 }
         };
 
-        // Injector for predefined 2026-2027 Academic Schedule
         const predefinedEvents = {
             'sep-d2': [{ title: 'School Year Begins / PA Day', tag: 'School' }],
             'sep-d3': [{ title: 'PA Day (Provincial Priorities)', tag: 'School' }],
@@ -290,19 +289,20 @@
         let plannerData = {};
         let monthThemes = {};
         
+        // NEW PASTEL THEME PALETTE
         const themePalette = {
-            'default': { bg: '#f4f4f4', text: '#555', tab: '#b89742' },
-            'slate':   { bg: '#708090', text: '#fff', tab: '#4a5568' },
-            'crimson': { bg: '#dc143c', text: '#fff', tab: '#8b0000' },
-            'ocean':   { bg: '#4682b4', text: '#fff', tab: '#274e7d' },
-            'emerald': { bg: '#50c878', text: '#fff', tab: '#2e7d48' },
-            'amethyst':{ bg: '#9966cc', text: '#fff', tab: '#5c3a82' },
-            'coral':   { bg: '#ff7f50', text: '#fff', tab: '#b34d26' },
-            'mustard': { bg: '#ffdb58', text: '#333', tab: '#b39420' },
-            'teal':    { bg: '#008080', text: '#fff', tab: '#004d4d' },
-            'navy':    { bg: '#000080', text: '#fff', tab: '#00004d' },
-            'olive':   { bg: '#808000', text: '#fff', tab: '#4d4d00' },
-            'rose':    { bg: '#ff007f', text: '#fff', tab: '#99004c' }
+            'default': { bg: '#f5f2eb', text: '#4a4a4a', tab: '#d4c4a8' },
+            'slate':   { bg: '#edf2f7', text: '#2d3748', tab: '#a0aec0' },
+            'crimson': { bg: '#fef0f2', text: '#5c2b36', tab: '#f4a8b6' },
+            'ocean':   { bg: '#ebf8ff', text: '#2a4365', tab: '#90cdf4' },
+            'emerald': { bg: '#f0fff4', text: '#22543d', tab: '#9ae6b4' },
+            'amethyst':{ bg: '#faf5ff', text: '#44337a', tab: '#d6bcfa' },
+            'coral':   { bg: '#fff5f5', text: '#652b19', tab: '#f6ad55' },
+            'mustard': { bg: '#fffff0', text: '#5f370e', tab: '#f6e05e' },
+            'teal':    { bg: '#e6fffa', text: '#234e52', tab: '#81e6d9' },
+            'navy':    { bg: '#ebefff', text: '#2c5282', tab: '#7f9cf5' },
+            'olive':   { bg: '#f0f4ed', text: '#3a4a32', tab: '#a3b899' },
+            'rose':    { bg: '#fff5f7', text: '#702459', tab: '#f687b3' }
         };
 
         const themeOptionsHtml = `
@@ -337,7 +337,6 @@
                 }
             }
             
-            // First run integration of predefined school dates
             if (!localStorage.getItem('academicEventsLoaded_v1')) {
                 for (const [dayKey, events] of Object.entries(predefinedEvents)) {
                     if (!plannerData[dayKey]) plannerData[dayKey] = { tasks: [], notes: [] };
