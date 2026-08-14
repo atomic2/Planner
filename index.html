@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iPad Planner - Full System Fixed</title>
+    <style>
+        :root { 
+            --bg-desk: #2c3e50; 
+            --page-color: #faf9f5; 
+            --text-main: #222; 
+            --gold-accent: #b89742; 
+            --green-accent: #4a5d3f; 
+            --border-light: #d1d1d1; 
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { 
+            background-color: var(--bg-desk); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* --- WORKSPACE & SPREAD --- */
+        .planner-workspace { 
+            position: relative; 
+            width: 96vw; 
+            max-width: 1400px; 
+            height: 90vh; 
+            max-height: 900px; 
+            display: flex; 
+            flex-direction: row; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6); 
+            border-radius: 12px; 
+        }
+
+        .page-container { 
+            flex: 1; 
+            background-color: var(--page-color); 
+            position: relative; 
+            padding: 30px 35px; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+        }
+        
+        .left-page { border-radius: 12px 0 0 12px; box-shadow: inset -12px 0 25px rgba(0,0,0,0.04); }
+        .right-page { border-radius: 0 12px 12px 0; box-shadow: inset 12px 0 25px rgba(0,0,0,0.04); }
+
+        .binding-spine { 
+            width: 45px; 
+            background-color: #e3e3e3; 
+            background-image: 
+                linear-gradient(90deg, transparent 40%, rgba(0,0,0,0.12) 50%, transparent 60%), 
+                repeating-linear-gradient(0deg, transparent, transparent 14px, #222 14px, #d4af37 16px, #fff 18px, #222 20px, transparent 20px, transparent 34px); 
+            box-shadow: inset 6px 0 12px rgba(0,0,0,0.15), inset -6px 0 12px rgba(0,0,0,0.15); 
+            z-index: 10; 
+        }
+
+        /* --- TABS --- */
+        .tabs { 
+            position: absolute; 
+            right: -38px; 
+            top: 3%; 
+            bottom: 3%; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 3px; 
+            list-style: none; 
+            z-index: 5; 
+            width: 38px; 
+        }
+        
+        .tab { 
+            flex: 1; 
+            background-color: var(--page-color); 
+            color: var(--text-main); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            letter-spacing: 1px;
+            border: 1px solid var(--border-light); 
+            border-left: none; 
+            border-radius: 0 6px 6px 0; 
+            box-shadow: 3px 2px 5px rgba(0,0,0,0.15); 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+        }
+        
+        .tab span { writing-mode: vertical-rl; text-orientation: mixed; }
+        .tab.active { background-color: var(--gold-accent); color: #fff; width: 46px; font-weight: bold; }
+        .tab.special { background-color: #34495e; color: white; }
+
+        /* --- CONTENT CONTAINERS --- */
+        .content-block { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+        .content-block.active { display: flex; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        .scroll-area { flex: 1; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; }
+
+        /* --- HEADERS --- */
+        .header { 
+            flex-shrink: 0; 
+            border-bottom: 2px solid var(--gold-accent); 
+            padding-bottom: 8px; 
+            margin-bottom: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: baseline; 
+            background-color: var(--page-color);
+        }
+        .header h2 { color: var(--text-main); font-size: 1.3rem; letter-spacing: 1px; font-weight: 400; text-transform: uppercase; }
+        .header-sub { font-size: 0.85rem; color: #666; letter-spacing: 0.5px; }
+        .back-btn { color: #666; cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; display: inline-block; transition: color 0.2s; }
+        .back-btn:hover { color: var(--gold-accent); }
+
+        /* --- SIMPLE TILE GRID --- */
+        .simple-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            flex: 1;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            background: #fff;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+        
+        .cal-tile { 
+            padding: 8px; 
+            border-right: 1px solid #eee; 
+            border-bottom: 1px solid #eee;
+            position: relative; 
+            cursor: pointer; 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background 0.1s;
+        }
+        
+        .cal-tile:nth-child(4n) { border-right: none; }
+        .cal-tile:nth-child(n+13) { border-bottom: none; }
+        .cal-tile:hover { background-color: #f7f5ed; }
+        .cal-tile.muted { background-color: #fafafa; cursor: default; }
+        .cal-tile.muted:hover { background-color: #fafafa; }
+        
+        .tile-date { 
+            font-weight: 600; font-size: 0.8rem; color: #555; margin-bottom: 6px; 
+            border-bottom: 1px solid #f0f0f0; padding-bottom: 4px; text-transform: uppercase;
+        }
+        
+        .tile-previews { font-size: 0.75rem; color: #444; overflow: hidden; flex: 1; line-height: 1.4; }
+        .tile-task-snippet { color: var(--green-accent); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; font-weight: 500;}
+        .tile-note-snippet { color: var(--gold-accent); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; font-weight: 500;}
+
+        /* --- TASKS & NOTES BLOCKS (Daily View) --- */
+        .day-block { margin-bottom: 20px; }
+        .block-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--border-light); padding-bottom: 4px; margin-bottom: 10px; }
+        .block-header h3 { font-size: 0.85rem; color: var(--text-main); letter-spacing: 1px; font-weight: 600; text-transform: uppercase; margin: 0;}
+        
+        .carry-over-btn { background: #eee; color: #555; border: 1px solid #ccc; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.7rem; transition: all 0.2s; }
+        .carry-over-btn:hover { background: var(--gold-accent); color: white; border-color: var(--gold-accent); }
+
+        .task-item { display: flex; align-items: flex-start; padding: 8px 0; border-bottom: 1px dashed #e5e5e5; }
+        .task-item input[type="checkbox"] { margin-right: 10px; margin-top: 3px; transform: scale(1.2); accent-color: var(--green-accent); cursor: pointer; }
+        
+        .note-item { display: flex; align-items: flex-start; padding: 8px 0; border-bottom: 1px dashed #e5e5e5; }
+        .note-item::before { content: '•'; color: var(--gold-accent); font-size: 1.5rem; line-height: 1rem; margin-right: 8px; }
+        
+        .entry-content-wrapper { flex: 1; display: flex; flex-direction: column; transition: opacity 0.2s; }
+        .entry-title { font-size: 0.95rem; font-weight: 600; color: #222; margin-bottom: 2px; transition: text-decoration 0.2s; }
+        .entry-details { font-size: 0.85rem; color: #555; line-height: 1.4; white-space: pre-wrap; }
+        .item-tags { margin-left: 8px; font-size: 0.65rem; color: #555; background: #e8e8e8; padding: 2px 6px; border-radius: 8px; flex-shrink: 0; margin-top: 2px;}
+
+        /* --- STRUCTURED DUAL-INPUT BOX --- */
+        .dynamic-input-group { display: flex; flex-direction: column; width: 100%; margin-top: 8px; background: #fff; border: 2px solid var(--gold-accent); border-radius: 6px; padding: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: border-color 0.2s; }
+        .dynamic-input-group:focus-within { border-color: var(--green-accent); }
+        .dynamic-title-input { width: 100%; border: none; border-bottom: 1px dashed #ccc; font-size: 1rem; font-weight: bold; color: #333; padding-bottom: 6px; margin-bottom: 6px; outline: none; }
+        .dynamic-title-input::placeholder { font-weight: normal; color: #999; }
+        .dynamic-details-input { width: 100%; border: none; font-size: 0.9rem; color: #444; outline: none; resize: none; min-height: 50px; max-height: 200px; overflow-y: auto; }
+        .dynamic-details-input::placeholder { color: #999; }
+
+        /* --- NAV FOOTERS --- */
+        .page-nav-bar { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-light); padding-top: 12px; margin-top: auto; padding-bottom: 8px; flex-shrink: 0; }
+        .nav-btn { background: #f4f4f4; color: #444; border: 1px solid #ccc; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.8rem; transition: all 0.2s; }
+        .nav-btn:hover { background: var(--gold-accent); color: white; border-color: var(--gold-accent); }
+
+        .input-bar { flex-shrink: 0; background: white; padding: 10px 16px; border-radius: 8px; box-shadow: 0 -3px 15px rgba(0,0,0,0.04); border: 1px solid var(--border-light); display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 12px; z-index: 20; }
+        .tag-label { color: #555; font-size: 0.8rem; font-weight: 600; margin-right: auto; }
+        .input-bar select { width: 120px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; flex-shrink: 0; }
+        .btn-task, .btn-note { border: none; padding: 8px 14px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.8rem; white-space: nowrap; transition: background-color 0.2s; }
+        .btn-task { background-color: var(--green-accent); color: white; }
+        .btn-note { background-color: var(--gold-accent); color: #fff; }
+        .btn-task:hover { background-color: #3b4b31; }
+        .btn-note:hover { background-color: #a38235; }
+    </style>
+</head>
+<body>
+
+    <div class="planner-workspace">
+        <div class="page-container left-page" id="left-page"></div>
+        <div class="binding-spine"></div>
+        <div class="page-container right-page" id="right-page">
+            <!-- TARGET FOR DYNAMIC CONTENT - PREVENTS INPUT BAR FROM BEING DELETED -->
+            <div class="scroll-area" id="right-content-area" style="overflow: hidden; display: flex; flex-direction: column; flex: 1;"></div>
+            
+            <div class="input-bar" id="inputBar" style="display:none;">
+                <span class="tag-label">Tag:</span>
+                <select id="entryTag">
+                    <option value="General">General</option>
+                    <option value="John">John</option>
+                    <option value="Maintenance">Maintenance</option>
+                </select>
+                <button class="btn-task" id="btn-add-task" onclick="toggleInput('task')">+ Task</button>
+                <button class="btn-note" id="btn-add-note" onclick="toggleInput('note')">+ Note</button>
+            </div>
+        </div>
+
+        <ul class="tabs">
+            <li class="tab active" id="tab-aug" onclick="loadMonth('aug')"><span>AUGUST</span></li>
+            <li class="tab special" id="tab-search" onclick="loadSearchPage()"><span>🔍</span></li>
+        </ul>
+    </div>
+
+    <!-- TEMPLATES -->
+    <div id="hidden-templates" style="display:none;">
+        <!-- DAILY VIEW TEMPLATE -->
+        <div id="data-empty-day">
+            <div class="header">
+                <div class="header-title-group">
+                    <div class="back-btn" onclick="loadMonth('aug')">⟵ Back to Tiles</div>
+                    <h2 id="dynamic-day-title">Date</h2>
+                </div>
+            </div>
+            <div class="scroll-area">
+                <div class="day-block tasks-container">
+                    <div class="block-header">
+                        <h3>To-Do</h3>
+                        <button class="carry-over-btn" id="btn-carry-over">⤑ Carry Over Unfinished</button>
+                    </div>
+                </div>
+                <div class="day-block notes-container">
+                    <div class="block-header">
+                        <h3>Notes & Log</h3>
+                    </div>
+                </div>
+                <div class="page-nav-bar" id="dynamic-page-nav"></div>
+            </div>
+        </div>
+
+        <!-- SEARCH PAGE TEMPLATE WITH BACK BUTTON -->
+        <div id="data-search-page">
+            <div class="header">
+                <div class="header-title-group">
+                    <div class="back-btn" onclick="loadMonth('aug')">⟵ Back to Calendar</div>
+                    <h2>Global Search</h2>
+                </div>
+            </div>
+            <div class="scroll-area">
+                <div style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
+                    <input type="text" id="globalSearchInput" class="dynamic-title-input" placeholder="Type a name, tag, or keyword..." oninput="runGlobalSearch()" style="border-bottom: 2px solid var(--gold-accent); padding: 8px;">
+                </div>
+                <div id="searchResultsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                    <p style="color: #777; font-size: 0.9rem; font-style: italic;">Type above to search your records...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRightId = "aug-grid"; 
+        let activeInputType = null;
+        let augustData = {};
+
+        window.onload = () => {
+            const saved = localStorage.getItem('augustStructuredData');
+            if (saved) augustData = JSON.parse(saved);
+            loadMonth('aug');
+        };
+
+        function loadMonth(monthId) {
+            forceSaveInline();
+            currentRightId = monthId + '-grid';
+            
+            // Explicitly redraws BOTH the left and right pages
+            renderCalendarSpread();
+            
+            document.getElementById('inputBar').style.display = 'none';
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + monthId).classList.add('active');
+        }
+
+        function loadSearchPage() {
+            forceSaveInline();
+            currentRightId = 'search-page';
+            
+            refreshLeftCalendar();
+            
+            // Strictly target the content area, preserving the input bar
+            const contentArea = document.getElementById('right-content-area');
+            const template = document.getElementById('data-search-page').innerHTML;
+            contentArea.innerHTML = `<div class="content-block active" id="content-right-page" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">${template}</div>`;
+            
+            document.getElementById('inputBar').style.display = 'none';
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-search').classList.add('active');
+        }
+
+        function runGlobalSearch() {
+            const query = document.getElementById('globalSearchInput').value.toLowerCase().trim();
+            const resultsContainer = document.getElementById('searchResultsContainer');
+            
+            if (query === '') {
+                resultsContainer.innerHTML = `<p style="color: #777; font-size: 0.9rem; font-style: italic;">Type above to search your records...</p>`;
+                return;
+            }
+
+            let matchesFound = [];
+
+            for (const [dayKey, dayData] of Object.entries(augustData)) {
+                if (!dayKey.includes('-d')) continue;
+                const dayNum = dayKey.split('-d')[1];
+                const dateObj = new Date(2026, 7, dayNum);
+                const dateString = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+                if (dayData.tasks) {
+                    dayData.tasks.forEach(t => {
+                        if (t.title.toLowerCase().includes(query) || (t.details && t.details.toLowerCase().includes(query)) || t.tag.toLowerCase().includes(query)) {
+                            matchesFound.push({ dayNum, dateString, type: 'Task', text: t.title, tag: t.tag });
+                        }
+                    });
+                }
+
+                if (dayData.notes) {
+                    dayData.notes.forEach(n => {
+                        if (n.title.toLowerCase().includes(query) || (n.details && n.details.toLowerCase().includes(query)) || n.tag.toLowerCase().includes(query)) {
+                            matchesFound.push({ dayNum, dateString, type: 'Note', text: n.title, tag: n.tag });
+                        }
+                    });
+                }
+            }
+
+            if (matchesFound.length === 0) {
+                resultsContainer.innerHTML = `<p style="color: #c0392b; font-size: 0.9rem;">No matching records found for "<b>${query}</b>"</p>`;
+                return;
+            }
+
+            let resultsHtml = `<p style="font-size: 0.85rem; color: #555; margin-bottom: 5px;">Found <b>${matchesFound.length}</b> match(es):</p>`;
+            
+            matchesFound.forEach(m => {
+                resultsHtml += `
+                    <div style="background: #fff; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-light); cursor: pointer; transition: border-color 0.2s;" onclick="openDay('aug', ${m.dayNum})">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--green-accent); font-weight: bold; margin-bottom: 3px;">
+                            <span>${m.dateString}</span>
+                            <span style="background: #eee; padding: 1px 6px; border-radius: 4px; color: #555;">${m.type} [${m.tag}]</span>
+                        </div>
+                        <div style="font-size: 0.95rem; color: #222; font-weight: 600;">${m.text}</div>
+                    </div>
+                `;
+            });
+
+            resultsContainer.innerHTML = resultsHtml;
+        }
+
+        // --- GRID RENDERING ---
+        function renderCalendarSpread() {
+            refreshLeftCalendar(); 
+
+            let rightHtml = `
+                <div class="content-block active" id="content-right-page" style="display:flex; flex-direction:column; flex:1;">
+                    <div class="header">
+                        <div class="header-title-group">
+                            <h2>August 2026 (Cont.)</h2>
+                            <span class="header-sub">Days 16 - 31</span>
+                        </div>
+                    </div>
+                    <div class="simple-grid">
+            `;
+            
+            for(let i = 16; i <= 31; i++) {
+                rightHtml += buildSequentialTileHTML('aug', i);
+            }
+            rightHtml += `</div></div>`;
+            
+            // Strictly target the content area
+            const rightContentArea = document.getElementById('right-content-area');
+            rightContentArea.innerHTML = rightHtml;
+        }
+
+        function refreshLeftCalendar() {
+            let leftHtml = `
+                <div class="content-block active" style="display:flex; flex-direction:column; flex:1;">
+                    <div class="header">
+                        <div class="header-title-group">
+                            <h2>August 2026</h2>
+                            <span class="header-sub">Days 1 - 15</span>
+                        </div>
+                    </div>
+                    <div class="simple-grid">
+            `;
+            
+            for(let i = 1; i <= 15; i++) {
+                leftHtml += buildSequentialTileHTML('aug', i);
+            }
+            leftHtml += `<div class="cal-tile muted"></div></div></div>`;
+            document.getElementById('left-page').innerHTML = leftHtml;
+        }
+
+        function buildSequentialTileHTML(monthId, dayNum) {
+            const dayKey = `${monthId}-d${dayNum}`;
+            const data = augustData[dayKey] || { tasks: [], notes: [] };
+            
+            let snippetHtml = "";
+            data.tasks.forEach(t => { 
+                const displayTitle = t.title || "Task";
+                if (t.done) {
+                    snippetHtml += `<span class="tile-task-snippet" style="text-decoration: line-through; opacity: 0.6;">✓ ${displayTitle}</span>`; 
+                } else {
+                    snippetHtml += `<span class="tile-task-snippet">☐ ${displayTitle}</span>`; 
+                }
+            });
+
+            data.notes.forEach(n => { 
+                const displayTitle = n.title || "Note"; 
+                snippetHtml += `<span class="tile-note-snippet">• ${displayTitle}</span>`; 
+            });
+
+            const dateObj = new Date(2026, 7, dayNum); 
+            const dayStr = dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+
+            return `
+                <div class="cal-tile" onclick="openDay('${monthId}', ${dayNum})">
+                    <div class="tile-date">${dayStr} ${dayNum}</div>
+                    <div class="tile-previews">${snippetHtml}</div>
+                </div>
+            `;
+        }
+
+        // --- OPENING A DAY ---
+        function openDay(monthId, dayNum) {
+            forceSaveInline();
+            currentRightId = `${monthId}-d${dayNum}`;
+            
+            let templateWrapper = document.createElement('div');
+            templateWrapper.innerHTML = document.getElementById('data-empty-day').innerHTML;
+            
+            const dateObj = new Date(2026, 7, dayNum);
+            const fullDateStr = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            templateWrapper.querySelector('#dynamic-day-title').innerText = fullDateStr;
+
+            // Strictly target the content area
+            const contentArea = document.getElementById('right-content-area');
+            contentArea.innerHTML = `<div class="content-block active" id="content-right-page" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">${templateWrapper.innerHTML}</div>`;
+
+            const btnCarryOver = contentArea.querySelector('#btn-carry-over');
+            if (btnCarryOver) {
+                btnCarryOver.setAttribute('onclick', `carryOverTasks('${monthId}', ${dayNum})`);
+            }
+
+            const dayKey = `${monthId}-d${dayNum}`;
+            const data = augustData[dayKey] || { tasks: [], notes: [] };
+            
+            const tasksContainer = contentArea.querySelector('.tasks-container');
+            data.tasks.forEach(t => {
+                tasksContainer.insertAdjacentHTML('beforeend', `
+                    <div class="task-item">
+                        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="handleTaskToggle(this)"> 
+                        <div class="entry-content-wrapper" style="${t.done ? 'opacity: 0.6;' : ''}">
+                            <span class="entry-title" style="${t.done ? 'text-decoration: line-through;' : ''}">${t.title}</span>
+                            ${t.details ? `<span class="entry-details">${t.details}</span>` : ''}
+                        </div>
+                        <span class="item-tags">${t.tag}</span>
+                    </div>
+                `);
+            });
+
+            const notesContainer = contentArea.querySelector('.notes-container');
+            data.notes.forEach(n => {
+                notesContainer.insertAdjacentHTML('beforeend', `
+                    <div class="note-item">
+                        <div class="entry-content-wrapper">
+                            <span class="entry-title">${n.title}</span>
+                            ${n.details ? `<span class="entry-details">${n.details}</span>` : ''}
+                        </div>
+                        <span class="item-tags">${n.tag}</span>
+                    </div>
+                `);
+            });
+
+            const navBar = contentArea.querySelector('#dynamic-page-nav');
+            if (navBar) {
+                let prevDay = dayNum - 1;
+                let nextDay = dayNum + 1;
+                let prevHtml = prevDay > 0 ? `<button class="nav-btn" onclick="openDay('${monthId}', ${prevDay})">← Prev Day</button>` : `<div></div>`;
+                let nextHtml = nextDay <= 31 ? `<button class="nav-btn" onclick="openDay('${monthId}', ${nextDay})">Next Day →</button>` : `<div></div>`;
+                navBar.innerHTML = prevHtml + nextHtml;
+            }
+
+            document.getElementById('inputBar').style.display = 'flex';
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + monthId).classList.add('active');
+        }
+
+        // --- CARRY OVER LOGIC ---
+        function carryOverTasks(monthId, dayNum) {
+            forceSaveInline();
+            const currentKey = `${monthId}-d${dayNum}`;
+            const nextDayNum = dayNum + 1;
+            
+            if (nextDayNum > 31) {
+                alert("Cannot carry over past the 31st in this prototype.");
+                return;
+            }
+
+            const nextKey = `${monthId}-d${nextDayNum}`;
+            
+            let currentData = augustData[currentKey] || { tasks: [], notes: [] };
+            let nextData = augustData[nextKey] || { tasks: [], notes: [] };
+
+            const completedTasks = [];
+            const unfinishedTasks = [];
+
+            currentData.tasks.forEach(t => {
+                if (t.done) completedTasks.push(t);
+                else unfinishedTasks.push(t);
+            });
+
+            if (unfinishedTasks.length === 0) {
+                alert("All caught up! No open tasks to carry over.");
+                return;
+            }
+
+            currentData.tasks = completedTasks;
+            augustData[currentKey] = currentData;
+
+            nextData.tasks = nextData.tasks.concat(unfinishedTasks);
+            augustData[nextKey] = nextData;
+
+            localStorage.setItem('augustStructuredData', JSON.stringify(augustData));
+            
+            refreshLeftCalendar(); 
+            openDay(monthId, dayNum); 
+        }
+
+        function handleTaskToggle(checkbox) {
+            const taskItem = checkbox.closest('.task-item');
+            const wrapper = taskItem.querySelector('.entry-content-wrapper');
+            const title = taskItem.querySelector('.entry-title');
+            
+            if (checkbox.checked) {
+                title.style.textDecoration = 'line-through';
+                wrapper.style.opacity = '0.6';
+            } else {
+                title.style.textDecoration = 'none';
+                wrapper.style.opacity = '1';
+            }
+            
+            extractAndSaveData();
+            refreshLeftCalendar();
+        }
+
+        // --- DUAL-LAYER DATA ENTRY ---
+        function toggleInput(type) {
+            const taskBtn = document.getElementById('btn-add-task');
+            const noteBtn = document.getElementById('btn-add-note');
+
+            if (activeInputType === type) { saveInlineEntry(type); return; }
+            if (activeInputType !== null) { saveInlineEntry(activeInputType); }
+
+            activeInputType = type;
+            const rightContainer = document.getElementById('content-right-page');
+            const targetClass = type === 'task' ? '.tasks-container' : '.notes-container';
+            const targetContainer = rightContainer.querySelector(targetClass);
+            if (!targetContainer) return;
+
+            const placeholderTitle = type === 'task' ? 'Task Header (Shows on Calendar)...' : 'Note Header (Shows on Calendar)...';
+            const placeholderDetails = type === 'task' ? 'Task Details (Hidden on Calendar)...' : 'Full Note (Hidden on Calendar)...';
+            
+            const inputHtml = `
+                <div class="dynamic-input-group" id="inlineInputGroup">
+                    <input type="text" id="inlineTitle" class="dynamic-title-input" placeholder="${placeholderTitle}">
+                    <textarea id="inlineDetails" class="dynamic-details-input" placeholder="${placeholderDetails}"></textarea>
+                </div>
+            `;
+            targetContainer.insertAdjacentHTML('beforeend', inputHtml);
+            
+            const inlineTitle = document.getElementById('inlineTitle');
+            const inlineDetails = document.getElementById('inlineDetails');
+            inlineTitle.focus();
+
+            inlineDetails.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+
+            if (type === 'task') {
+                taskBtn.innerText = "✓ Save Task";
+                taskBtn.style.backgroundColor = "#2b3623";
+            } else {
+                noteBtn.innerText = "✓ Save Note";
+                noteBtn.style.backgroundColor = "#82652b";
+            }
+            
+            const scrollArea = document.getElementById('right-content-area');
+            if(scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
+        }
+
+        function saveInlineEntry(type) {
+            const inputGroup = document.getElementById('inlineInputGroup');
+            if (!inputGroup) { resetButtons(); return; }
+
+            const titleText = document.getElementById('inlineTitle').value.trim();
+            const detailsText = document.getElementById('inlineDetails').value.trim();
+            const tag = document.getElementById('entryTag').value;
+            const targetContainer = inputGroup.parentElement;
+            
+            inputGroup.remove();
+            resetButtons();
+            activeInputType = null;
+
+            if (titleText !== '') {
+                if (type === 'task') {
+                    targetContainer.insertAdjacentHTML('beforeend', `
+                        <div class="task-item">
+                            <input type="checkbox" onchange="handleTaskToggle(this)"> 
+                            <div class="entry-content-wrapper">
+                                <span class="entry-title">${titleText}</span>
+                                ${detailsText ? `<span class="entry-details">${detailsText}</span>` : ''}
+                            </div>
+                            <span class="item-tags">${tag}</span>
+                        </div>
+                    `);
+                } else {
+                    targetContainer.insertAdjacentHTML('beforeend', `
+                        <div class="note-item">
+                            <div class="entry-content-wrapper">
+                                <span class="entry-title">${titleText}</span>
+                                ${detailsText ? `<span class="entry-details">${detailsText}</span>` : ''}
+                            </div>
+                            <span class="item-tags">${tag}</span>
+                        </div>
+                    `);
+                }
+                extractAndSaveData();
+                refreshLeftCalendar(); 
+            }
+        }
+
+        function resetButtons() {
+            const taskBtn = document.getElementById('btn-add-task');
+            const noteBtn = document.getElementById('btn-add-note');
+            taskBtn.innerText = "+ Task";
+            taskBtn.style.backgroundColor = "var(--green-accent)";
+            noteBtn.innerText = "+ Note";
+            noteBtn.style.backgroundColor = "var(--gold-accent)";
+        }
+
+        function forceSaveInline() {
+            if (activeInputType !== null) saveInlineEntry(activeInputType);
+        }
+
+        function extractAndSaveData() {
+            forceSaveInline();
+            if (!currentRightId.includes('-d')) return;
+
+            const contentArea = document.getElementById('right-content-area');
+            const tasks = [];
+            const notes = [];
+
+            contentArea.querySelectorAll('.task-item').forEach(item => {
+                tasks.push({
+                    title: item.querySelector('.entry-title').innerText,
+                    details: item.querySelector('.entry-details') ? item.querySelector('.entry-details').innerText : '',
+                    tag: item.querySelector('.item-tags').innerText,
+                    done: item.querySelector('input[type="checkbox"]').checked
+                });
+            });
+
+            contentArea.querySelectorAll('.note-item').forEach(item => {
+                notes.push({
+                    title: item.querySelector('.entry-title').innerText,
+                    details: item.querySelector('.entry-details') ? item.querySelector('.entry-details').innerText : '',
+                    tag: item.querySelector('.item-tags').innerText
+                });
+            });
+
+            augustData[currentRightId] = { tasks, notes };
+            localStorage.setItem('augustStructuredData', JSON.stringify(augustData));
+        }
+    </script>
+</body>
+</html>
