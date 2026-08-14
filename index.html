@@ -33,8 +33,8 @@
             display: flex; flex-direction: column; overflow: hidden; border-radius: 12px;
         }
 
-        .tabs { position: absolute; right: -42px; top: 3%; bottom: 3%; display: flex; flex-direction: column; gap: 3px; list-style: none; z-index: 5; width: 42px; }
-        .tab { flex: 1; background-color: var(--page-color); color: var(--text-main); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; border: 1px solid var(--border-light); border-left: none; border-radius: 0 8px 8px 0; box-shadow: 3px 2px 5px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; }
+        .tabs { position: absolute; right: -42px; top: 2%; bottom: 2%; display: flex; flex-direction: column; gap: 2px; list-style: none; z-index: 5; width: 42px; }
+        .tab { flex: 1; background-color: var(--page-color); color: var(--text-main); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; border: 1px solid var(--border-light); border-left: none; border-radius: 0 8px 8px 0; box-shadow: 3px 2px 5px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s ease; }
         .tab span { writing-mode: vertical-rl; text-orientation: mixed; }
         .tab.active { background-color: var(--active-tab-bg); color: #fff; width: 52px; font-weight: bold; }
         .tab.special { background-color: #34495e; color: white; }
@@ -71,6 +71,7 @@
         .btn-action:hover { transform: translateY(-2px); filter: brightness(1.1); }
         .btn-secondary { background-color: #6c757d; }
 
+        /* --- EXPANDED 5-DAY GRID (NO WEEKENDS) --- */
         .simple-grid { display: grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows: 1fr; gap: 1px; background: #e5e5e5; flex: 1; border: 1px solid var(--border-light); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 10px; }
         
         .cal-tile { background: #fff; cursor: pointer; display: flex; flex-direction: column; overflow: hidden; transition: background 0.1s; }
@@ -104,7 +105,6 @@
         .entry-details { font-size: 0.95rem; color: #555; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
         .item-tags { margin-left: 12px; font-size: 0.75rem; color: #555; background: #e8e8e8; padding: 3px 8px; border-radius: 8px; flex-shrink: 0; margin-top: 2px; font-weight: 600; align-self: flex-start;}
 
-        /* --- NEW: DELETE BUTTON STYLES --- */
         .delete-btn {
             background: none;
             border: none;
@@ -161,7 +161,18 @@
         </div>
 
         <ul class="tabs">
-            <li class="tab active" id="tab-aug" onclick="loadMonth('aug')"><span>AUGUST</span></li>
+            <li class="tab" id="tab-jan" onclick="loadMonth('jan')"><span>JAN</span></li>
+            <li class="tab" id="tab-feb" onclick="loadMonth('feb')"><span>FEB</span></li>
+            <li class="tab" id="tab-mar" onclick="loadMonth('mar')"><span>MAR</span></li>
+            <li class="tab" id="tab-apr" onclick="loadMonth('apr')"><span>APR</span></li>
+            <li class="tab" id="tab-may" onclick="loadMonth('may')"><span>MAY</span></li>
+            <li class="tab" id="tab-jun" onclick="loadMonth('jun')"><span>JUN</span></li>
+            <li class="tab" id="tab-jul" onclick="loadMonth('jul')"><span>JUL</span></li>
+            <li class="tab active" id="tab-aug" onclick="loadMonth('aug')"><span>AUG</span></li>
+            <li class="tab" id="tab-sep" onclick="loadMonth('sep')"><span>SEP</span></li>
+            <li class="tab" id="tab-oct" onclick="loadMonth('oct')"><span>OCT</span></li>
+            <li class="tab" id="tab-nov" onclick="loadMonth('nov')"><span>NOV</span></li>
+            <li class="tab" id="tab-dec" onclick="loadMonth('dec')"><span>DEC</span></li>
             <li class="tab special" id="tab-search" onclick="loadSearchPage()"><span>🔍</span></li>
         </ul>
     </div>
@@ -173,7 +184,7 @@
             <div class="header">
                 <div class="header-title-group" style="width: 100%; display: flex; justify-content: space-between; align-items: flex-end;">
                     <div>
-                        <div class="back-btn" onclick="loadMonth('aug')">⟵ Back to Calendar</div>
+                        <div class="back-btn" id="btn-dynamic-back" onclick="loadMonth(currentMonthId)">⟵ Back to Calendar</div>
                         <h2 id="dynamic-day-title">Date</h2>
                     </div>
                     
@@ -203,7 +214,7 @@
         <div id="data-search-page">
             <div class="header">
                 <div class="header-title-group">
-                    <div class="back-btn" onclick="loadMonth('aug')">⟵ Back to Calendar</div>
+                    <div class="back-btn" onclick="loadMonth(currentMonthId)">⟵ Back to Calendar</div>
                     <h2>Global Search & Archive</h2>
                 </div>
             </div>
@@ -222,9 +233,26 @@
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="processImportFile(event)">
 
     <script>
+        const year = 2026;
+        const monthsConfig = {
+            'jan': { idx: 0, name: 'January', days: 31 },
+            'feb': { idx: 1, name: 'February', days: 28 },
+            'mar': { idx: 2, name: 'March', days: 31 },
+            'apr': { idx: 3, name: 'April', days: 30 },
+            'may': { idx: 4, name: 'May', days: 31 },
+            'jun': { idx: 5, name: 'June', days: 30 },
+            'jul': { idx: 6, name: 'July', days: 31 },
+            'aug': { idx: 7, name: 'August', days: 31 },
+            'sep': { idx: 8, name: 'September', days: 30 },
+            'oct': { idx: 9, name: 'October', days: 31 },
+            'nov': { idx: 10, name: 'November', days: 30 },
+            'dec': { idx: 11, name: 'December', days: 31 }
+        };
+
+        let currentMonthId = "aug"; 
         let currentActiveId = "aug-grid"; 
         let activeInputType = null;
-        let augustData = {};
+        let plannerData = {};
         
         const themePalette = {
             'default': { bg: '#f4f4f4', text: '#555', tab: '#b89742' },
@@ -262,8 +290,17 @@
         });
 
         window.onload = () => {
-            const saved = localStorage.getItem('augustStructuredData');
-            if (saved) augustData = JSON.parse(saved);
+            const saved = localStorage.getItem('plannerStructuredData');
+            if (saved) {
+                plannerData = JSON.parse(saved);
+            } else {
+                // Check for legacy August data to prevent data loss during upgrade
+                const oldSaved = localStorage.getItem('augustStructuredData');
+                if (oldSaved) {
+                    plannerData = JSON.parse(oldSaved);
+                    localStorage.setItem('plannerStructuredData', oldSaved);
+                }
+            }
             
             const savedTheme = localStorage.getItem('globalTileTheme') || 'default';
             applyGlobalThemeVars(savedTheme);
@@ -285,15 +322,15 @@
 
         function overrideDayColor(colorKey) {
             if (!currentActiveId.includes('-d')) return;
-            if (!augustData[currentActiveId]) augustData[currentActiveId] = { tasks: [], notes: [] };
-            augustData[currentActiveId].tileColor = colorKey;
-            localStorage.setItem('augustStructuredData', JSON.stringify(augustData));
+            if (!plannerData[currentActiveId]) plannerData[currentActiveId] = { tasks: [], notes: [] };
+            plannerData[currentActiveId].tileColor = colorKey;
+            localStorage.setItem('plannerStructuredData', JSON.stringify(plannerData));
         }
 
         function exportBackup() {
             forceSaveInline();
             const backupData = {
-                augustStructuredData: augustData,
+                plannerStructuredData: plannerData,
                 globalTileTheme: localStorage.getItem('globalTileTheme') || 'default',
                 exportDate: new Date().toISOString()
             };
@@ -319,16 +356,17 @@
             reader.onload = function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
-                    if (parsed.augustStructuredData) {
-                        augustData = parsed.augustStructuredData;
-                        localStorage.setItem('augustStructuredData', JSON.stringify(augustData));
+                    // Check for both old and new save file structures during import
+                    if (parsed.plannerStructuredData || parsed.augustStructuredData) {
+                        plannerData = parsed.plannerStructuredData || parsed.augustStructuredData;
+                        localStorage.setItem('plannerStructuredData', JSON.stringify(plannerData));
                     }
                     if (parsed.globalTileTheme) {
                         localStorage.setItem('globalTileTheme', parsed.globalTileTheme);
                         applyGlobalThemeVars(parsed.globalTileTheme);
                     }
                     alert("Backup restored successfully!");
-                    loadMonth('aug');
+                    loadMonth(currentMonthId);
                 } catch (err) {
                     alert("Invalid backup file format.");
                 }
@@ -339,6 +377,7 @@
 
         function loadMonth(monthId) {
             forceSaveInline();
+            currentMonthId = monthId;
             currentActiveId = monthId + '-grid';
             renderCalendarSpread();
             document.getElementById('inputBar').style.display = 'none';
@@ -352,10 +391,13 @@
             let isFirstRow = true;
             const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
             const savedTheme = localStorage.getItem('globalTileTheme') || 'default';
+            
+            const conf = monthsConfig[currentMonthId];
 
-            for (let d = 1; d <= 31; d++) {
-                let dow = new Date(2026, 7, d).getDay(); 
+            for (let d = 1; d <= conf.days; d++) {
+                let dow = new Date(year, conf.idx, d).getDay(); 
                 
+                // Only build Monday (1) through Friday (5)
                 if (dow > 0 && dow < 6) { 
                     if (isFirstRow) {
                         for (let i = 1; i < dow; i++) {
@@ -365,7 +407,7 @@
                         isFirstRow = false;
                     }
 
-                    gridHtml += buildSequentialTileHTML('aug', d, dow);
+                    gridHtml += buildSequentialTileHTML(currentMonthId, d, dow);
                     rowCells++;
                 }
             }
@@ -381,7 +423,7 @@
                     <div class="header">
                         <div class="header-title-group" style="display: flex; width: 100%; justify-content: space-between; align-items: flex-end;">
                             <div>
-                                <h2 class="cursive-title">August 2026</h2>
+                                <h2 class="cursive-title">${conf.name} ${year}</h2>
                             </div>
                             
                             <div class="header-controls">
@@ -411,7 +453,7 @@
 
         function buildSequentialTileHTML(monthId, dayNum, dow) {
             const dayKey = `${monthId}-d${dayNum}`;
-            const data = augustData[dayKey] || { tasks: [], notes: [] };
+            const data = plannerData[dayKey] || { tasks: [], notes: [] };
             
             let inlineStyle = '';
             if (data.tileColor && data.tileColor !== 'global') {
@@ -444,12 +486,14 @@
 
         function openDay(monthId, dayNum) {
             forceSaveInline();
+            currentMonthId = monthId;
             currentActiveId = `${monthId}-d${dayNum}`;
             
             let templateWrapper = document.createElement('div');
             templateWrapper.innerHTML = document.getElementById('data-empty-day').innerHTML;
             
-            const dateObj = new Date(2026, 7, dayNum);
+            const conf = monthsConfig[monthId];
+            const dateObj = new Date(year, conf.idx, dayNum);
             const fullDateStr = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
             templateWrapper.querySelector('#dynamic-day-title').innerText = fullDateStr;
             
@@ -457,7 +501,7 @@
             const overrideSelect = templateWrapper.querySelector('#overrideThemeSelect');
             overrideSelect.innerHTML = selectHtml;
             
-            const data = augustData[currentActiveId] || { tasks: [], notes: [] };
+            const data = plannerData[currentActiveId] || { tasks: [], notes: [] };
             if (data.tileColor) overrideSelect.value = data.tileColor;
             else overrideSelect.value = "global";
 
@@ -474,7 +518,7 @@
                 let prevDay = dayNum - 1;
                 let nextDay = dayNum + 1;
                 let prevHtml = prevDay > 0 ? `<button class="nav-btn" onclick="openDay('${monthId}', ${prevDay})">← Prev Day</button>` : `<div></div>`;
-                let nextHtml = nextDay <= 31 ? `<button class="nav-btn" onclick="openDay('${monthId}', ${nextDay})">Next Day →</button>` : `<div></div>`;
+                let nextHtml = nextDay <= conf.days ? `<button class="nav-btn" onclick="openDay('${monthId}', ${nextDay})">Next Day →</button>` : `<div></div>`;
                 navBar.innerHTML = prevHtml + nextHtml;
             }
 
@@ -506,9 +550,8 @@
             document.getElementById('inputBar').style.display = 'flex';
         }
 
-        // --- UPDATED: POPULATE ENTRIES WITH DELETE BUTTON ---
         function populateEntries(keyId, contentArea) {
-            const data = augustData[keyId] || { tasks: [], notes: [] };
+            const data = plannerData[keyId] || { tasks: [], notes: [] };
             
             const tasksContainer = contentArea.querySelector('.tasks-container');
             data.tasks.forEach(t => {
@@ -540,7 +583,6 @@
             });
         }
 
-        // --- NEW: DELETE ENTRY LOGIC ---
         function deleteEntry(btn) {
             if(confirm("Are you sure you want to delete this entry?")) {
                 const entry = btn.closest('.task-item') || btn.closest('.note-item');
@@ -575,7 +617,7 @@
 
             let matchesFound = [];
 
-            for (const [dayKey, dayData] of Object.entries(augustData)) {
+            for (const [dayKey, dayData] of Object.entries(plannerData)) {
                 let dateString = "";
                 let clickAction = "";
 
@@ -583,10 +625,15 @@
                     dateString = "💡 BIG IDEAS VAULT";
                     clickAction = `openIdeas()`;
                 } else if (dayKey.includes('-d')) {
-                    const dayNum = dayKey.split('-d')[1];
-                    const dateObj = new Date(2026, 7, dayNum);
-                    dateString = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                    clickAction = `openDay('aug', ${dayNum})`;
+                    const parts = dayKey.split('-d');
+                    const mId = parts[0];
+                    const dayNum = parts[1];
+                    
+                    if(monthsConfig[mId]) {
+                        const dateObj = new Date(year, monthsConfig[mId].idx, dayNum);
+                        dateString = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                        clickAction = `openDay('${mId}', ${dayNum})`;
+                    }
                 } else {
                     continue;
                 }
@@ -633,11 +680,12 @@
             const currentKey = `${monthId}-d${dayNum}`;
             const nextDayNum = dayNum + 1;
             
-            if (nextDayNum > 31) { alert("Cannot carry over past the 31st."); return; }
+            const maxDays = monthsConfig[monthId].days;
+            if (nextDayNum > maxDays) { alert("Cannot carry over past the end of the month."); return; }
             const nextKey = `${monthId}-d${nextDayNum}`;
             
-            let currentData = augustData[currentKey] || { tasks: [], notes: [] };
-            let nextData = augustData[nextKey] || { tasks: [], notes: [] };
+            let currentData = plannerData[currentKey] || { tasks: [], notes: [] };
+            let nextData = plannerData[nextKey] || { tasks: [], notes: [] };
 
             const completedTasks = [];
             const unfinishedTasks = [];
@@ -650,11 +698,11 @@
             if (unfinishedTasks.length === 0) { alert("All caught up! No open tasks to carry over."); return; }
 
             currentData.tasks = completedTasks;
-            augustData[currentKey] = currentData;
+            plannerData[currentKey] = currentData;
             nextData.tasks = nextData.tasks.concat(unfinishedTasks);
-            augustData[nextKey] = nextData;
+            plannerData[nextKey] = nextData;
 
-            localStorage.setItem('augustStructuredData', JSON.stringify(augustData));
+            localStorage.setItem('plannerStructuredData', JSON.stringify(plannerData));
             openDay(monthId, dayNum); 
         }
 
@@ -717,7 +765,6 @@
             contentArea.scrollTop = contentArea.scrollHeight;
         }
 
-        // --- UPDATED: ADD DELETE BUTTON TO NEW INLINE ENTRIES ---
         function saveInlineEntry(type) {
             const inputGroup = document.getElementById('inlineInputGroup');
             if (!inputGroup) { resetButtons(); return; }
@@ -798,13 +845,13 @@
                 });
             });
 
-            const existingData = augustData[currentActiveId] || {};
+            const existingData = plannerData[currentActiveId] || {};
             const tileColor = existingData.tileColor;
             
-            augustData[currentActiveId] = { tasks, notes };
-            if (tileColor) augustData[currentActiveId].tileColor = tileColor;
+            plannerData[currentActiveId] = { tasks, notes };
+            if (tileColor) plannerData[currentActiveId].tileColor = tileColor;
             
-            localStorage.setItem('augustStructuredData', JSON.stringify(augustData));
+            localStorage.setItem('plannerStructuredData', JSON.stringify(plannerData));
         }
     </script>
 </body>
