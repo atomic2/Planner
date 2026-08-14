@@ -46,7 +46,22 @@
         .scroll-area { flex: 1; overflow-y: auto; padding-right: 8px; display: flex; flex-direction: column; }
 
         .header { flex-shrink: 0; border-bottom: 2px solid var(--active-tab-bg); padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; background-color: var(--page-color); transition: border-color 0.3s;}
+        
         .header h2 { color: var(--text-main); font-size: 1.6rem; letter-spacing: 1px; font-weight: 400; text-transform: uppercase; }
+        
+        /* --- NEW: CURSIVE HEADING STYLE --- */
+        .cursive-title {
+            font-family: 'Snell Roundhand', 'Apple Chancery', 'Brush Script MT', 'Lucida Handwriting', 'Segoe Print', cursive;
+            font-size: 3.2rem !important;
+            text-transform: none !important;
+            font-weight: 600;
+            letter-spacing: 1px !important;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1;
+            padding-bottom: 4px;
+        }
+
         .header-sub { font-size: 0.95rem; color: #666; letter-spacing: 0.5px; }
         
         .back-btn { color: #666; cursor: pointer; font-size: 0.95rem; font-weight: bold; margin-bottom: 8px; display: inline-block; transition: color 0.2s; }
@@ -242,11 +257,8 @@
             <option value="rose">Rose</option>
         `;
 
-        // --- NEW: BEFORE UNLOAD WARNING ---
         window.addEventListener('beforeunload', function (e) {
-            // Cancel the event and trigger the browser's exit warning dialog
             e.preventDefault();
-            // Modern browsers will display a generic "Leave Site?" message
             e.returnValue = 'Please remember to download a backup before closing the planner.';
         });
 
@@ -279,7 +291,6 @@
             localStorage.setItem('augustStructuredData', JSON.stringify(augustData));
         }
 
-        // --- BACKUP & RESTORE LOGIC ---
         function exportBackup() {
             forceSaveInline();
             const backupData = {
@@ -369,13 +380,13 @@
                 rowCells++;
             }
 
+            // MODIFIED HERE: Applied cursive title and removed operational timeline text
             let fullHtml = `
                 <div class="content-block active" style="display:flex; flex-direction:column; flex:1;">
                     <div class="header">
                         <div class="header-title-group" style="display: flex; width: 100%; justify-content: space-between; align-items: flex-end;">
                             <div>
-                                <h2>August 2026</h2>
-                                <span class="header-sub">Monday - Friday Operational Timeline</span>
+                                <h2 class="cursive-title">August 2026</h2>
                             </div>
                             
                             <div class="header-controls">
